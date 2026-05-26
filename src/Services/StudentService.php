@@ -13,6 +13,13 @@ class StudentService
         return $connection->getAll();
     }
 
+    public static function findById(int $id)
+    {
+        $connection = DatabaseConnection::getInstance();
+        $connection->setQuery('SELECT * FROM students WHERE id = :id', ['id' => $id]);
+        return $connection->get();
+    }
+
     public static function countAll()
     {
         $connection = DatabaseConnection::getInstance();

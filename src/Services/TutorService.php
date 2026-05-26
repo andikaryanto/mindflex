@@ -29,6 +29,49 @@ class TutorService
         return $connection->getAll();
     }
 
+    public static function getActiveTutors(string $subject = '')
+    {
+        $connection = DatabaseConnection::getInstance();
+        $params = [];
+        $sql = "SELECT id, name, email, hourly_rate, subjects, rating, status
+                FROM tutors
+                WHERE status = 'active'";
+
+        if ($subject !== '') {
+            $sql .= ' AND subjects LIKE :subject';
+            $params['subject'] = '%' . $subject . '%';
+        }
+
+        $connection->setQuery($sql, $params);
+        return $connection->getAll();
+    }
+
+    public static function findActiveTutorBySubject(string $subject)
+    {
+        $connection = DatabaseConnection::getInstance();
+        $connection->setQuery(
+            "SELECT *
+            FROM tutors
+            WHERE status = 'active'
+                AND subjects LIKE :subject
+            LIMIT 1",
+            ['subject' => '%' . $subject . '%']
+        );
+        return $connection->get();
+    }
+
+    public static function updateRate(int $id, float $hourly_rate)
+    {
+        $connection = DatabaseConnection::getInstance();
+        return $connection->exec(
+            'UPDATE tutors SET hourly_rate = :hourly_rate WHERE id = :id',
+            [
+                'hourly_rate' => $hourly_rate,
+                'id' => $id
+            ]
+        );
+    }
+
     public static function countAll()
     {
         $connection = DatabaseConnection::getInstance();
