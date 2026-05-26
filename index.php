@@ -3,6 +3,8 @@
 require __DIR__ . '/vendor/autoload.php';
 // Legacy Admin Dashboard for Mindflex Matchmaking System
 
+session_start();
+
 use App\Services\AssigmentService;
 use App\Services\RevenueSevice;
 use App\Services\StudentService;
@@ -15,6 +17,24 @@ error_reporting(E_ALL);
 // Action Handlers
 $message = "";
 $error_message = "";
+
+function getCsrfToken()
+{
+    if (empty($_SESSION['csrf_token'])) {
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    }
+
+    return $_SESSION['csrf_token'];
+}
+
+function validateCsrfToken(array $input)
+{
+    $token = $input['csrf_token'] ?? '';
+
+    if (!is_string($token) || !hash_equals(getCsrfToken(), $token)) {
+        throw new RuntimeException('Invalid CSRF token.');
+    }
+}
 
 function redirectWithMessage(string $message)
 {
@@ -56,6 +76,8 @@ function handleAddStudent(array $input)
 
 function handlePostAction(string $action, array $input)
 {
+    validateCsrfToken($input);
+
     switch ($action) {
         case 'create_assignment':
             handleCreateAssignment($input);
@@ -67,6 +89,14 @@ function handlePostAction(string $action, array $input)
 
         case 'add_student':
             handleAddStudent($input);
+            break;
+
+        case 'delete':
+            handleDeleteAssignment($input);
+            break;
+
+        case 'complete':
+            handleCompleteAssignment($input);
             break;
 
         default:
@@ -86,19 +116,6 @@ function handleCompleteAssignment(array $input)
     $id = $input['id'];
     AssigmentService::completeById($id);
     redirectWithMessage('Assignment completed');
-}
-
-function handleGetAction(string $action, array $input)
-{
-    switch ($action) {
-        case 'delete':
-            handleDeleteAssignment($input);
-            break;
-
-        case 'complete':
-            handleCompleteAssignment($input);
-            break;
-    }
 }
 
 function loadDashboardData()
@@ -123,16 +140,6 @@ function loadDashboardData()
     ];
 }
 
-if (isset($_GET['action'])) {
-    $action = $_GET['action'];
-
-    try {
-        handleGetAction($action, $_GET);
-    } catch (Exception $e) {
-        $error_message = "Failed to process request: " . $e->getMessage();
-    }
-}
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     $action = $_POST['action'];
 
@@ -147,6 +154,7 @@ if (isset($_GET['msg'])) {
     $message = $_GET['msg'];
 }
 
+$csrf_token = getCsrfToken();
 $tutors_count = $students_count = $active_assignments_count = 0;
 $total_weekly_revenue = 0.0;
 $tutors = [];

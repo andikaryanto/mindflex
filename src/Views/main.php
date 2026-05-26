@@ -243,11 +243,20 @@
                             </span>
                         </td>
                         <td>
-                            <!-- DANGEROUS: Destructive actions via GET links, vulnerable to CSRF -->
                             <?php if ($row['status'] === '1'): ?>
-                                <a href="index.php?action=complete&id=<?php echo $row['id']; ?>" class="btn" style="padding: 2px 5px; font-size: 11px; background-color: #2196f3;">Complete</a>
+                                <form method="POST" action="index.php" style="display: inline;">
+                                    <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrf_token); ?>">
+                                    <input type="hidden" name="action" value="complete">
+                                    <input type="hidden" name="id" value="<?php echo $row['id']; ?>">
+                                    <button type="submit" class="btn" style="padding: 2px 5px; font-size: 11px; background-color: #2196f3;">Complete</button>
+                                </form>
                             <?php endif; ?>
-                            <a href="index.php?action=delete&id=<?php echo $row['id']; ?>" onclick="return confirm('Are you sure?')" class="btn btn-danger" style="padding: 2px 5px; font-size: 11px;">Cancel</a>
+                            <form method="POST" action="index.php" style="display: inline;" onsubmit="return confirm('Are you sure?')">
+                                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrf_token); ?>">
+                                <input type="hidden" name="action" value="delete">
+                                <input type="hidden" name="id" value="<?php echo $row['id']; ?>">
+                                <button type="submit" class="btn btn-danger" style="padding: 2px 5px; font-size: 11px;">Cancel</button>
+                            </form>
                         </td>
                     </tr>
                 <?php endforeach; ?>
@@ -313,6 +322,7 @@
             <!-- Add Tutor Form -->
             <div class="section-title" style="margin-top: 20px; font-size: 14px;">Add New Tutor Profile</div>
             <form method="POST" action="index.php" style="background-color: #f9f9f9; padding: 10px; border: 1px solid #ccc;">
+                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrf_token); ?>">
                 <input type="hidden" name="action" value="add_tutor">
                 <div class="form-row">
                     <label>Full Name:</label>
@@ -342,6 +352,7 @@
             <div style="background-color: #e0f2fe; padding: 15px; border: 2px solid #0284c7; margin-bottom: 20px;">
                 <h4 style="margin: 0 0 10px 0; color: #0369a1;">Create Tutor-Student Match</h4>
                 <form method="POST" action="index.php">
+                    <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrf_token); ?>">
                     <input type="hidden" name="action" value="create_assignment">
                     <div class="form-row">
                         <label>Student:</label>
@@ -406,6 +417,7 @@
             <!-- Add Student Form -->
             <div class="section-title" style="margin-top: 20px; font-size: 14px;">Register New Student</div>
             <form method="POST" action="index.php" style="background-color: #f9f9f9; padding: 10px; border: 1px solid #ccc;">
+                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrf_token); ?>">
                 <input type="hidden" name="action" value="add_student">
                 <div class="form-row">
                     <label>Full Name:</label>
