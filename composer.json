@@ -1,0 +1,16 @@
+{
+    "name": "root/mindflex",
+    "description": "A Test",
+    "authors": [
+        {
+            "name": "Andik",
+            "email": "andik.aryantoo@gmail.com"
+        }
+    ],
+    "require": {},
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        }
+    }
+}
