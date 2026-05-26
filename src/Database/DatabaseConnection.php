@@ -49,8 +49,8 @@ class DatabaseConnection
     public function exec(string $query, $params = [])
     {
         $this->setQuery($query, $params);
-        $statement = $this->db->prepare($this->query, $this->params);
-        return $statement->execute();
+        $statement = $this->db->prepare($this->query);
+        return $statement->execute($this->params);
     }
 
     /**

@@ -21,10 +21,11 @@ class StudentService
         $connection = DatabaseConnection::getInstance();
         $sql = 'INSERT INTO students (name, grade_level, budget_limit) 
                         VALUES (:name, :grade_level, :budget_limit)';
-        return $connection->exec($sql, [
+        $params = [
             'name' => $name,
             'grade_level' => $grade_level,
             'budget_limit' => $budget_limit
-        ]);
+        ];
+        return $connection->exec($sql, $params);
     }
 }
