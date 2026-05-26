@@ -81,31 +81,42 @@ function handlePostAction($action)
     }
 }
 
+function handleDeleteAssignment()
+{
+    $id = $_GET['id']; // SQL Injection vulnerability here
+    AssigmentService::deleteById($id);
+    header("Location: index.php?msg=Assignment+deleted+successfully");
+    exit;
+}
+
+function handleCompleteAssignment()
+{
+    $id = $_GET['id'];
+    AssigmentService::completeById($id);
+    header("Location: index.php?msg=Assignment+completed");
+    exit;
+}
+
+function handleGetAction($action)
+{
+    switch ($action) {
+        case 'delete':
+            handleDeleteAssignment();
+            break;
+
+        case 'complete':
+            handleCompleteAssignment();
+            break;
+    }
+}
+
 if (isset($_GET['action'])) {
     $action = $_GET['action'];
 
-    // DANGEROUS: Deleting assignment via GET without CSRF token or validation
-    if ($action === 'delete') {
-        try {
-            $id = $_GET['id']; // SQL Injection vulnerability here
-            AssigmentService::deleteById($id);
-            header("Location: index.php?msg=Assignment+deleted+successfully");
-            exit;
-        } catch (Exception $e) {
-            $error_message = "Failed to delete: " . $e->getMessage();
-        }
-    }
-
-    // DANGEROUS: Completing assignment via GET without CSRF token or validation
-    if ($action === 'complete') {
-        try {
-            $id = $_GET['id'];             
-            AssigmentService::completeById($id);
-            header("Location: index.php?msg=Assignment+completed");
-            exit;
-        } catch (Exception $e) {
-            $error_message = "Failed to update: " . $e->getMessage();
-        }
+    try {
+        handleGetAction($action);
+    } catch (Exception $e) {
+        $error_message = "Failed to process request: " . $e->getMessage();
     }
 }
 
@@ -140,8 +151,10 @@ try {
 
 // Fetch tutors with Search - SQL INJECTION VULNERABLE
 $tutors = [];
+$students = [];
+$assignments_list = [];
+
 try {
-    $search_params = [];
     if (isset($_GET['search']) && $_GET['search'] !== '') {
         $search = $_GET['search'];
         // Change to service and bind param to prevent injection
@@ -149,24 +162,11 @@ try {
     } else {
         $tutors = TutorService::getAllTutors();
     }
-} catch (Exception $e) {
-    // Suppress or assign empty
-}
 
-// Fetch students
-$students = [];
-try {
     $students = StudentService::getAllStudents();
-} catch (Exception $e) {
-    // Suppress
-}
-
-// Fetch active assignments - N+1 Loop for displaying details
-$assignments_list = [];
-try {
     $assignments_list = AssigmentService::getAllAssignments();
 } catch (Exception $e) {
-    // Suppress
+    $error_message = "Failed to fetch dashboard data: " . $e->getMessage();
 }
 
 include 'src/Views/main.php';
