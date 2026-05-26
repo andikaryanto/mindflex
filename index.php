@@ -3,7 +3,6 @@
 require __DIR__ . '/vendor/autoload.php';
 // Legacy Admin Dashboard for Mindflex Matchmaking System
 
-use App\Database\DatabaseConnection;
 use App\Services\AssigmentService;
 use App\Services\RevenueSevice;
 use App\Services\StudentService;
@@ -12,13 +11,6 @@ use App\Services\TutorService;
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
-
-// Database Connection
-try {
-    $db = DatabaseConnection::getInstance();
-} catch (PDOException $e) {
-    die("Database connection failed: " . $e->getMessage() . ". Make sure mindflex.db exists and is writeable.");
-}
 
 // Action Handlers
 $message = "";
@@ -110,6 +102,29 @@ function handleGetAction($action)
     }
 }
 
+function loadDashboardData()
+{
+    $tutors = [];
+
+    if (isset($_GET['search']) && $_GET['search'] !== '') {
+        $search = $_GET['search'];
+        // Change to service and bind param to prevent injection
+        $tutors = TutorService::getAllTutorsByNameOrSubject($search);
+    } else {
+        $tutors = TutorService::getAllTutors();
+    }
+
+    return [
+        'tutors_count' => TutorService::countAll(),
+        'students_count' => StudentService::countAll(),
+        'active_assignments_count' => AssigmentService::countActive(),
+        'total_weekly_revenue' => RevenueSevice::calculateWeeklyRevenue(),
+        'tutors' => $tutors,
+        'students' => StudentService::getAllStudents(),
+        'assignments_list' => AssigmentService::getAllAssignments(),
+    ];
+}
+
 if (isset($_GET['action'])) {
     $action = $_GET['action'];
 
@@ -141,21 +156,15 @@ $students = [];
 $assignments_list = [];
 
 try {
-    $tutors_count = TutorService::countAll();
-    $students_count = StudentService::countAll();
-    $active_assignments_count = AssigmentService::countActive();
-    $total_weekly_revenue = RevenueSevice::calculateWeeklyRevenue();
+    $dashboard_data = loadDashboardData();
 
-    if (isset($_GET['search']) && $_GET['search'] !== '') {
-        $search = $_GET['search'];
-        // Change to service and bind param to prevent injection
-        $tutors = TutorService::getAllTutorsByNameOrSubject($search);
-    } else {
-        $tutors = TutorService::getAllTutors();
-    }
-
-    $students = StudentService::getAllStudents();
-    $assignments_list = AssigmentService::getAllAssignments();
+    $tutors_count = $dashboard_data['tutors_count'];
+    $students_count = $dashboard_data['students_count'];
+    $active_assignments_count = $dashboard_data['active_assignments_count'];
+    $total_weekly_revenue = $dashboard_data['total_weekly_revenue'];
+    $tutors = $dashboard_data['tutors'];
+    $students = $dashboard_data['students'];
+    $assignments_list = $dashboard_data['assignments_list'];
 } catch (Exception $e) {
     $error_message = "Database tables are missing or not configured. Run migration/setup. " . $e->getMessage();
 }
