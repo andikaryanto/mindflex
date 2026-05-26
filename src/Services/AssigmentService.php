@@ -9,7 +9,17 @@ class AssigmentService
     public static function getAllAssignments()
     {
         $connection = DatabaseConnection::getInstance();
-        $connection->setQuery('SELECT * FROM assignments');
+        $connection->setQuery(
+            'SELECT 
+                a.*,
+                s.name AS student_name,
+                t.name AS tutor_name,
+                t.hourly_rate AS tutor_hourly_rate,
+                t.subjects AS tutor_subjects
+            FROM assignments a
+            LEFT JOIN students s ON s.id = a.student_id
+            LEFT JOIN tutors t ON t.id = a.tutor_id'
+        );
         return $connection->getAll();
     }
 

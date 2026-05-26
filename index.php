@@ -16,56 +16,57 @@ error_reporting(E_ALL);
 $message = "";
 $error_message = "";
 
-function handleCreateAssignment()
+function redirectWithMessage(string $message)
 {
-    $student_id = $_POST['student_id'];
-    $tutor_id = $_POST['tutor_id'];
-    $weekly_hours = $_POST['weekly_hours'];
+    header('Location: index.php?msg=' . urlencode($message));
+    exit;
+}
 
-    // Vulnerable to SQL injection in INSERT as well, plus zero validation
+function handleCreateAssignment(array $input)
+{
+    $student_id = $input['student_id'];
+    $tutor_id = $input['tutor_id'];
+    $weekly_hours = $input['weekly_hours'];
+
     AssigmentService::create($student_id, $tutor_id, $weekly_hours);
-    header("Location: index.php?msg=Assignment+created");
-    exit;
+    redirectWithMessage('Assignment created');
 }
 
-function handleAddTutor()
+function handleAddTutor(array $input)
 {
-    $name = $_POST['name'];
-    $email = $_POST['email'];
-    $hourly_rate = $_POST['hourly_rate'];
-    $subjects = $_POST['subjects'];
-    $rating = $_POST['rating'] ?? 5.0;
+    $name = $input['name'];
+    $email = $input['email'];
+    $hourly_rate = $input['hourly_rate'];
+    $subjects = $input['subjects'];
+    $rating = $input['rating'] ?? 5.0;
 
-    // Vulnerable to SQL Injection
     TutorService::create($name, $email, $hourly_rate, $subjects, $rating);
-    header("Location: index.php?msg=Tutor+added");
-    exit;
+    redirectWithMessage('Tutor added');
 }
 
-function handleAddStudent()
+function handleAddStudent(array $input)
 {
-    $name = $_POST['name'];
-    $grade_level = $_POST['grade_level'];
-    $budget_limit = $_POST['budget_limit'];
+    $name = $input['name'];
+    $grade_level = $input['grade_level'];
+    $budget_limit = $input['budget_limit'];
 
     StudentService::create($name, $grade_level, $budget_limit);
-    header("Location: index.php?msg=Student+added");
-    exit;
+    redirectWithMessage('Student added');
 }
 
-function handlePostAction($action)
+function handlePostAction(string $action, array $input)
 {
     switch ($action) {
         case 'create_assignment':
-            handleCreateAssignment();
+            handleCreateAssignment($input);
             break;
 
         case 'add_tutor':
-            handleAddTutor();
+            handleAddTutor($input);
             break;
 
         case 'add_student':
-            handleAddStudent();
+            handleAddStudent($input);
             break;
 
         default:
@@ -73,31 +74,29 @@ function handlePostAction($action)
     }
 }
 
-function handleDeleteAssignment()
+function handleDeleteAssignment(array $input)
 {
-    $id = $_GET['id']; // SQL Injection vulnerability here
+    $id = $input['id'];
     AssigmentService::deleteById($id);
-    header("Location: index.php?msg=Assignment+deleted+successfully");
-    exit;
+    redirectWithMessage('Assignment deleted successfully');
 }
 
-function handleCompleteAssignment()
+function handleCompleteAssignment(array $input)
 {
-    $id = $_GET['id'];
+    $id = $input['id'];
     AssigmentService::completeById($id);
-    header("Location: index.php?msg=Assignment+completed");
-    exit;
+    redirectWithMessage('Assignment completed');
 }
 
-function handleGetAction($action)
+function handleGetAction(string $action, array $input)
 {
     switch ($action) {
         case 'delete':
-            handleDeleteAssignment();
+            handleDeleteAssignment($input);
             break;
 
         case 'complete':
-            handleCompleteAssignment();
+            handleCompleteAssignment($input);
             break;
     }
 }
@@ -108,7 +107,6 @@ function loadDashboardData()
 
     if (isset($_GET['search']) && $_GET['search'] !== '') {
         $search = $_GET['search'];
-        // Change to service and bind param to prevent injection
         $tutors = TutorService::getAllTutorsByNameOrSubject($search);
     } else {
         $tutors = TutorService::getAllTutors();
@@ -129,7 +127,7 @@ if (isset($_GET['action'])) {
     $action = $_GET['action'];
 
     try {
-        handleGetAction($action);
+        handleGetAction($action, $_GET);
     } catch (Exception $e) {
         $error_message = "Failed to process request: " . $e->getMessage();
     }
@@ -139,7 +137,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     $action = $_POST['action'];
 
     try {
-        handlePostAction($action);
+        handlePostAction($action, $_POST);
     } catch (Exception $e) {
         $error_message = "Error processing request: " . $e->getMessage();
     }

@@ -217,18 +217,10 @@
             <?php else: ?>
                 <?php 
                 foreach ($assignments_list as $row): 
-                    // N+1 queries here - fetches tutor and student individually inside the loop
-                    $tutor = null;
-                    $student = null;
-                    try {
-                        $tutor = $db->query("SELECT * FROM tutors WHERE id = " . $row['tutor_id'])->fetch(PDO::FETCH_ASSOC);
-                        $student = $db->query("SELECT * FROM students WHERE id = " . $row['student_id'])->fetch(PDO::FETCH_ASSOC);
-                    } catch (Exception $e) {}
-
-                    $student_name = $student ? $student['name'] : 'Unknown (ID: ' . $row['student_id'] . ')';
-                    $tutor_name = $tutor ? $tutor['name'] : 'Unknown (ID: ' . $row['tutor_id'] . ')';
-                    $tutor_rate = $tutor ? (float)$tutor['hourly_rate'] : 0.0;
-                    $tutor_subjects = $tutor ? $tutor['subjects'] : '';
+                    $student_name = $row['student_name'] ?: 'Unknown (ID: ' . $row['student_id'] . ')';
+                    $tutor_name = $row['tutor_name'] ?: 'Unknown (ID: ' . $row['tutor_id'] . ')';
+                    $tutor_rate = (float)($row['tutor_hourly_rate'] ?: 0.0);
+                    $tutor_subjects = $row['tutor_subjects'] ?: '';
                     $weekly_hours = (int)$row['weekly_hours'];
                     $weekly_cost = $weekly_hours * $tutor_rate;
 
