@@ -72,7 +72,7 @@ class DatabaseConnection
             $statement = $this->db->prepare($this->query);
 
             $statement->execute($this->params);
-            $result = $statement->fetch();
+            $result = $statement->fetch(PDO::FETCH_ASSOC);
             $this->query = '';
             $this->params = [];
 
@@ -92,7 +92,7 @@ class DatabaseConnection
             $statement = $this->db->prepare($this->query);
 
             $statement->execute($this->params);
-            $result = $statement->fetchAll();
+            $result = $statement->fetchAll(PDO::FETCH_ASSOC);
             $this->query = '';
             $this->params = [];
 
