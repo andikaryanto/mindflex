@@ -4,6 +4,7 @@ require __DIR__ . '/vendor/autoload.php';
 // Legacy Admin Dashboard for Mindflex Matchmaking System
 
 use App\Database\DatabaseConnection;
+use App\Services\RevenueSevice;
 
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
@@ -117,16 +118,8 @@ try {
     $students_count = $db->query("SELECT COUNT(*) FROM students")->fetchColumn();
     $active_assignments_count = $db->query("SELECT COUNT(*) FROM assignments WHERE status = '1'")->fetchColumn();
 
-    // Retroactive Pricing Calculation Flaw & N+1 Query in stats calculation
-    $total_weekly_revenue = 0.0;
-    $all_active_assignments = $db->query("SELECT * FROM assignments WHERE status = '1'")->fetchAll(PDO::FETCH_ASSOC);
-    foreach ($all_active_assignments as $asg) {
-        // N+1 database call to fetch tutor's CURRENT hourly rate
-        $tutor_data = $db->query("SELECT hourly_rate FROM tutors WHERE id = " . $asg['tutor_id'])->fetch(PDO::FETCH_ASSOC);
-        if ($tutor_data) {
-            $total_weekly_revenue += (float)$asg['weekly_hours'] * (float)$tutor_data['hourly_rate'];
-        }
-    }
+    $total_weekly_revenue = RevenueSevice::calculateWeeklyRevenue();
+
 } catch (Exception $e) {
     // If database tables aren't created yet
     $tutors_count = $students_count = $active_assignments_count = 0;
@@ -152,7 +145,7 @@ try {
 // Fetch students
 $students = [];
 try {
-    $students = $db->query("SELECT * FROM students")->fetchAll(PDO::FETCH_ASSOC);
+    $students = $db->setQuery("SELECT * FROM students")->getAll();
 } catch (Exception $e) {
     // Suppress
 }
@@ -160,7 +153,7 @@ try {
 // Fetch active assignments - N+1 Loop for displaying details
 $assignments_list = [];
 try {
-    $assignments_list = $db->query("SELECT * FROM assignments")->fetchAll(PDO::FETCH_ASSOC);
+    $assignments_list = $db->setQuery("SELECT * FROM assignments")->getAll();
 } catch (Exception $e) {
     // Suppress
 }

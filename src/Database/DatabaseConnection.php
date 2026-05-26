@@ -8,6 +8,9 @@ class DatabaseConnection
 {
     protected PDO $db;
     private static ?DatabaseConnection $instance = null;
+
+    public string $query = '';
+
     private function __construct()
     {
         $this->db = self::connect();
@@ -38,12 +41,37 @@ class DatabaseConnection
     }
 
     public function query(string $query)
-    {
+    {   
         return $this->db->query($query);
     }
 
     public function exec(string $query)
     {
         return $this->db->exec($query);
+    }
+
+    /**
+     * set query tobe executed
+     */
+    public function setQuery(string $query)
+    {
+        $this->query = $query;
+        return $this;
+    }
+
+    /**
+     * get single row
+     */
+    public function get()
+    {
+        return $this->db->query($this->query)->fetch(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * get rows
+     */
+    public function getAll()
+    {
+        return $this->db->query($this->query)->fetchAll(PDO::FETCH_ASSOC);
     }
 }
