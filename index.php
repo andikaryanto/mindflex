@@ -24,6 +24,63 @@ try {
 $message = "";
 $error_message = "";
 
+function handleCreateAssignment()
+{
+    $student_id = $_POST['student_id'];
+    $tutor_id = $_POST['tutor_id'];
+    $weekly_hours = $_POST['weekly_hours'];
+
+    // Vulnerable to SQL injection in INSERT as well, plus zero validation
+    AssigmentService::create($student_id, $tutor_id, $weekly_hours);
+    header("Location: index.php?msg=Assignment+created");
+    exit;
+}
+
+function handleAddTutor()
+{
+    $name = $_POST['name'];
+    $email = $_POST['email'];
+    $hourly_rate = $_POST['hourly_rate'];
+    $subjects = $_POST['subjects'];
+    $rating = $_POST['rating'] ?? 5.0;
+
+    // Vulnerable to SQL Injection
+    TutorService::create($name, $email, $hourly_rate, $subjects, $rating);
+    header("Location: index.php?msg=Tutor+added");
+    exit;
+}
+
+function handleAddStudent()
+{
+    $name = $_POST['name'];
+    $grade_level = $_POST['grade_level'];
+    $budget_limit = $_POST['budget_limit'];
+
+    StudentService::create($name, $grade_level, $budget_limit);
+    header("Location: index.php?msg=Student+added");
+    exit;
+}
+
+function handlePostAction($action)
+{
+    switch ($action) {
+        case 'create_assignment':
+            handleCreateAssignment();
+            break;
+
+        case 'add_tutor':
+            handleAddTutor();
+            break;
+
+        case 'add_student':
+            handleAddStudent();
+            break;
+
+        default:
+            throw new InvalidArgumentException('Invalid action.');
+    }
+}
+
 if (isset($_GET['action'])) {
     $action = $_GET['action'];
 
@@ -55,55 +112,10 @@ if (isset($_GET['action'])) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     $action = $_POST['action'];
 
-    // DANGEROUS: Create assignment without CSRF, budget validation, hourly rate snapshotted, or capacity check
-    if ($action === 'create_assignment') {
-        try {
-            $student_id = $_POST['student_id'];
-            $tutor_id = $_POST['tutor_id'];
-            $weekly_hours = $_POST['weekly_hours'];
-
-            // Vulnerable to SQL injection in INSERT as well, plus zero validation
-            AssigmentService::create($student_id, $tutor_id, $weekly_hours);
-            header("Location: index.php?msg=Assignment+created");
-            exit;
-        } catch (Exception $e) {
-            $error_message = "Error creating assignment: " . $e->getMessage();
-        }
-    }
-
-    // Create Tutor - RAW SQL
-    if ($action === 'add_tutor') {
-        try {
-            $name = $_POST['name'];
-            $email = $_POST['email'];
-            $hourly_rate = $_POST['hourly_rate'];
-            $subjects = $_POST['subjects'];
-            $rating = $_POST['rating'] ?? 5.0;
-
-            // Vulnerable to SQL Injection
-            TutorService::create($name, $email, $hourly_rate, $subjects, $rating);
-            header("Location: index.php?msg=Tutor+added");
-            exit;
-        } catch (Exception $e) {
-            $error_message = "Error adding tutor: " . $e->getMessage();
-        }
-    }
-
-    // Create Student - RAW SQL
-    if ($action === 'add_student') {
-        try {
-            $name = $_POST['name'];
-            $grade_level = $_POST['grade_level'];
-            $budget_limit = $_POST['budget_limit'];
-
-            // Vulnerable to SQL Injection
-            
-            StudentService::create($name, $grade_level, $budget_limit);
-            header("Location: index.php?msg=Student+added");
-            exit;
-        } catch (Exception $e) {
-            $error_message = "Error adding student: " . $e->getMessage();
-        }
+    try {
+        handlePostAction($action);
+    } catch (Exception $e) {
+        $error_message = "Error processing request: " . $e->getMessage();
     }
 }
 

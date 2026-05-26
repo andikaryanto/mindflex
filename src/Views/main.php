@@ -277,11 +277,11 @@
                         <a href="index.php" style="font-size: 12px; margin-left: 10px;">Clear</a>
                     <?php endif; ?>
                 </form>
-                <?php if (isset($_GET['search']) && $_GET['search'] !== ''): ?>
+                <!-- <?php if (isset($_GET['search']) && $_GET['search'] !== ''): ?>
                     <div style="font-size: 11px; color: #555; margin-top: 5px;">
                         SQL executed: <code><?php echo htmlspecialchars($tutors_query); ?></code>
                     </div>
-                <?php endif; ?>
+                <?php endif; ?> -->
             </div>
 
             <table class="data-table" style="font-size: 12px;">
