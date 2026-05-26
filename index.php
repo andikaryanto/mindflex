@@ -63,8 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             $weekly_hours = $_POST['weekly_hours'];
 
             // Vulnerable to SQL injection in INSERT as well, plus zero validation
-            $db->exec("INSERT INTO assignments (student_id, tutor_id, weekly_hours, status, created_at) 
-                       VALUES ($student_id, $tutor_id, $weekly_hours, '1', '" . date('Y-m-d H:i:s') . "')");
+            AssigmentService::create($student_id, $tutor_id, $weekly_hours);
             header("Location: index.php?msg=Assignment+created");
             exit;
         } catch (Exception $e) {
