@@ -38,7 +38,7 @@ class TutorService
     ) {
         $connection = DatabaseConnection::getInstance();
         $sql = "INSERT INTO tutors (name, email, hourly_rate, subjects, status, rating) 
-                   VALUES (:name, :email, :hourly_rate, :subjects, 'avtive', :rating)";
+                   VALUES (:name, :email, :hourly_rate, :subjects, 'active', :rating)";
 
         return $connection->exec($sql, [
             'name' => $name,
