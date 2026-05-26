@@ -13,6 +13,13 @@ class AssigmentService
         return $connection->getAll();
     }
 
+    public static function countActive()
+    {
+        $connection = DatabaseConnection::getInstance();
+        $connection->setQuery("SELECT COUNT(*) AS total FROM assignments WHERE status = '1'");
+        return (int)$connection->get()['total'];
+    }
+
     public static function deleteById(int $id)
     {
         $connection = DatabaseConnection::getInstance();

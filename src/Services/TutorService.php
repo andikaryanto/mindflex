@@ -29,6 +29,13 @@ class TutorService
         return $connection->getAll();
     }
 
+    public static function countAll()
+    {
+        $connection = DatabaseConnection::getInstance();
+        $connection->setQuery('SELECT COUNT(*) AS total FROM tutors');
+        return (int)$connection->get()['total'];
+    }
+
     public static function create(
         string $name,
         string $email,

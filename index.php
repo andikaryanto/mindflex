@@ -134,27 +134,18 @@ if (isset($_GET['msg'])) {
     $message = $_GET['msg'];
 }
 
-// Fetch stats - UNOPTIMIZED & N+1 Loop
-try {
-    $tutors_count = $db->query("SELECT COUNT(*) FROM tutors")->fetchColumn();
-    $students_count = $db->query("SELECT COUNT(*) FROM students")->fetchColumn();
-    $active_assignments_count = $db->query("SELECT COUNT(*) FROM assignments WHERE status = '1'")->fetchColumn();
-
-    $total_weekly_revenue = RevenueSevice::calculateWeeklyRevenue();
-
-} catch (Exception $e) {
-    // If database tables aren't created yet
-    $tutors_count = $students_count = $active_assignments_count = 0;
-    $total_weekly_revenue = 0.0;
-    $error_message = "Database tables are missing or not configured. Run migration/setup. " . $e->getMessage();
-}
-
-// Fetch tutors with Search - SQL INJECTION VULNERABLE
+$tutors_count = $students_count = $active_assignments_count = 0;
+$total_weekly_revenue = 0.0;
 $tutors = [];
 $students = [];
 $assignments_list = [];
 
 try {
+    $tutors_count = TutorService::countAll();
+    $students_count = StudentService::countAll();
+    $active_assignments_count = AssigmentService::countActive();
+    $total_weekly_revenue = RevenueSevice::calculateWeeklyRevenue();
+
     if (isset($_GET['search']) && $_GET['search'] !== '') {
         $search = $_GET['search'];
         // Change to service and bind param to prevent injection
@@ -166,7 +157,7 @@ try {
     $students = StudentService::getAllStudents();
     $assignments_list = AssigmentService::getAllAssignments();
 } catch (Exception $e) {
-    $error_message = "Failed to fetch dashboard data: " . $e->getMessage();
+    $error_message = "Database tables are missing or not configured. Run migration/setup. " . $e->getMessage();
 }
 
 include 'src/Views/main.php';
