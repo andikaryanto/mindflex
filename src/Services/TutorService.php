@@ -28,4 +28,24 @@ class TutorService
         $connection->setQuery('SELECT * FROM tutors');
         return $connection->getAll();
     }
+
+    public static function create(
+        string $name,
+        string $email,
+        string $hourly_rate,
+        string $subjects,
+        string $rating
+    ) {
+        $connection = DatabaseConnection::getInstance();
+        $sql = "INSERT INTO tutors (name, email, hourly_rate, subjects, status, rating) 
+                   VALUES (:name, :email, :hourly_rate, :subjects, avtive, :rating)";
+
+        return $connection->exec($sql, [
+            'name' => $name,
+            'subjects' => $subjects,
+            'hourly_rate' => $hourly_rate,
+            'email' => $email,
+            'rating' => $rating
+        ]);
+    }
 }

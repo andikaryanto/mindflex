@@ -81,9 +81,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             $rating = $_POST['rating'] ?? 5.0;
 
             // Vulnerable to SQL Injection
-            $query = "INSERT INTO tutors (name, email, hourly_rate, subjects, status, rating) 
-                      VALUES ('$name', '$email', $hourly_rate, '$subjects', 'active', $rating)";
-            $db->exec($query);
+            TutorService::create($name, $email, $hourly_rate, $subjects, $rating);
             header("Location: index.php?msg=Tutor+added");
             exit;
         } catch (Exception $e) {
@@ -99,9 +97,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             $budget_limit = $_POST['budget_limit'];
 
             // Vulnerable to SQL Injection
-            $query = "INSERT INTO students (name, grade_level, budget_limit) 
-                      VALUES ('$name', '$grade_level', $budget_limit)";
-            $db->exec($query);
+            
+            StudentService::create($name, $grade_level, $budget_limit);
             header("Location: index.php?msg=Student+added");
             exit;
         } catch (Exception $e) {
