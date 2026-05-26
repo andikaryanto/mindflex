@@ -49,8 +49,14 @@ class DatabaseConnection
     public function exec(string $query, $params = [])
     {
         $this->setQuery($query, $params);
-        $statement = $this->db->prepare($this->query);
-        return $statement->execute($this->params);
+
+        try {
+            $statement = $this->db->prepare($this->query);
+            return $statement->execute($this->params);
+        } finally {
+            $this->query = '';
+            $this->params = [];
+        }
     }
 
     /**
@@ -73,8 +79,6 @@ class DatabaseConnection
 
             $statement->execute($this->params);
             $result = $statement->fetch(PDO::FETCH_ASSOC);
-            $this->query = '';
-            $this->params = [];
 
             return $result;
         } finally {
@@ -93,9 +97,7 @@ class DatabaseConnection
 
             $statement->execute($this->params);
             $result = $statement->fetchAll(PDO::FETCH_ASSOC);
-            $this->query = '';
-            $this->params = [];
-
+            
             return $result;
         } finally {
             $this->query = '';

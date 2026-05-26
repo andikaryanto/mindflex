@@ -36,6 +36,79 @@ function validateCsrfToken(array $input)
     }
 }
 
+function isMissingInput(array $input, string $key)
+{
+    return !array_key_exists($key, $input) || trim((string)$input[$key]) === '';
+}
+
+function requireString(array $input, string $key, int $maxLength)
+{
+    if (isMissingInput($input, $key)) {
+        throw new InvalidArgumentException($key . ' is required.');
+    }
+
+    $value = trim((string)$input[$key]);
+
+    if (strlen($value) > $maxLength) {
+        throw new InvalidArgumentException($key . ' is too long.');
+    }
+
+    return $value;
+}
+
+function requireEmail(array $input, string $key)
+{
+    $value = requireString($input, $key, 255);
+
+    if (filter_var($value, FILTER_VALIDATE_EMAIL) === false) {
+        throw new InvalidArgumentException('Invalid email address.');
+    }
+
+    return $value;
+}
+
+function requirePositiveInt(array $input, string $key)
+{
+    if (isMissingInput($input, $key)) {
+        throw new InvalidArgumentException($key . ' is required.');
+    }
+
+    $value = filter_var($input[$key], FILTER_VALIDATE_INT);
+
+    if ($value === false) {
+        throw new InvalidArgumentException($key . ' must be an integer.');
+    }
+
+    return $value;
+}
+
+function requireFloat(array $input, string $key)
+{
+    if (isMissingInput($input, $key)) {
+        throw new InvalidArgumentException($key . ' is required.');
+    }
+
+    return validateFloat($input[$key], $key);
+}
+
+function optionalFloat(array $input, string $key, float $default)
+{
+    if (isMissingInput($input, $key)) {
+        return $default;
+    }
+
+    return validateFloat($input[$key], $key);
+}
+
+function validateFloat($rawValue, string $key)
+{
+    if (!is_numeric($rawValue)) {
+        throw new InvalidArgumentException($key . ' must be numeric.');
+    }
+
+    return (float)$rawValue;
+}
+
 function redirectWithMessage(string $message)
 {
     header('Location: index.php?msg=' . urlencode($message));
@@ -44,9 +117,9 @@ function redirectWithMessage(string $message)
 
 function handleCreateAssignment(array $input)
 {
-    $student_id = $input['student_id'];
-    $tutor_id = $input['tutor_id'];
-    $weekly_hours = $input['weekly_hours'];
+    $student_id = requirePositiveInt($input, 'student_id');
+    $tutor_id = requirePositiveInt($input, 'tutor_id');
+    $weekly_hours = requirePositiveInt($input, 'weekly_hours');
 
     AssigmentService::create($student_id, $tutor_id, $weekly_hours);
     redirectWithMessage('Assignment created');
@@ -54,11 +127,11 @@ function handleCreateAssignment(array $input)
 
 function handleAddTutor(array $input)
 {
-    $name = $input['name'];
-    $email = $input['email'];
-    $hourly_rate = $input['hourly_rate'];
-    $subjects = $input['subjects'];
-    $rating = $input['rating'] ?? 5.0;
+    $name = requireString($input, 'name', 100);
+    $email = requireEmail($input, 'email');
+    $hourly_rate = requireFloat($input, 'hourly_rate');
+    $subjects = requireString($input, 'subjects', 255);
+    $rating = optionalFloat($input, 'rating', 5.0);
 
     TutorService::create($name, $email, $hourly_rate, $subjects, $rating);
     redirectWithMessage('Tutor added');
@@ -66,9 +139,9 @@ function handleAddTutor(array $input)
 
 function handleAddStudent(array $input)
 {
-    $name = $input['name'];
-    $grade_level = $input['grade_level'];
-    $budget_limit = $input['budget_limit'];
+    $name = requireString($input, 'name', 100);
+    $grade_level = requireString($input, 'grade_level', 50);
+    $budget_limit = requireFloat($input, 'budget_limit');
 
     StudentService::create($name, $grade_level, $budget_limit);
     redirectWithMessage('Student added');
@@ -106,14 +179,14 @@ function handlePostAction(string $action, array $input)
 
 function handleDeleteAssignment(array $input)
 {
-    $id = $input['id'];
+    $id = requirePositiveInt($input, 'id');
     AssigmentService::deleteById($id);
     redirectWithMessage('Assignment deleted successfully');
 }
 
 function handleCompleteAssignment(array $input)
 {
-    $id = $input['id'];
+    $id = requirePositiveInt($input, 'id');
     AssigmentService::completeById($id);
     redirectWithMessage('Assignment completed');
 }
