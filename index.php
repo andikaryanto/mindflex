@@ -11,7 +11,7 @@ error_reporting(E_ALL);
 
 // Database Connection
 try {
-    $db = DatabaseConnection::connect();
+    $db = DatabaseConnection::getInstance();
 } catch (PDOException $e) {
     die("Database connection failed: " . $e->getMessage() . ". Make sure mindflex.db exists and is writeable.");
 }
