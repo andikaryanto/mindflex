@@ -4,7 +4,10 @@ require __DIR__ . '/vendor/autoload.php';
 // Legacy Admin Dashboard for Mindflex Matchmaking System
 
 use App\Database\DatabaseConnection;
+use App\Services\AssigmentService;
 use App\Services\RevenueSevice;
+use App\Services\StudentService;
+use App\Services\TutorService;
 
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
@@ -28,7 +31,7 @@ if (isset($_GET['action'])) {
     if ($action === 'delete') {
         try {
             $id = $_GET['id']; // SQL Injection vulnerability here
-            $db->exec("DELETE FROM assignments WHERE id = " . $id);
+            AssigmentService::deleteById($id);
             header("Location: index.php?msg=Assignment+deleted+successfully");
             exit;
         } catch (Exception $e) {
@@ -39,8 +42,8 @@ if (isset($_GET['action'])) {
     // DANGEROUS: Completing assignment via GET without CSRF token or validation
     if ($action === 'complete') {
         try {
-            $id = $_GET['id']; // SQL Injection vulnerability here
-            $db->exec("UPDATE assignments SET status = '2' WHERE id = " . $id);
+            $id = $_GET['id'];             
+            AssigmentService::completeById($id);
             header("Location: index.php?msg=Assignment+completed");
             exit;
         } catch (Exception $e) {
@@ -130,14 +133,14 @@ try {
 // Fetch tutors with Search - SQL INJECTION VULNERABLE
 $tutors = [];
 try {
+    $search_params = [];
     if (isset($_GET['search']) && $_GET['search'] !== '') {
         $search = $_GET['search'];
-        // Direct interpolation of user input -> SQL Injection
-        $tutors_query = "SELECT * FROM tutors WHERE name LIKE '%" . $search . "%' OR subjects LIKE '%" . $search . "%'";
+        // Change to service and bind param to prevent injection
+        $tutors = TutorService::getAllTutorsByNameOrSubject($search);
     } else {
-        $tutors_query = "SELECT * FROM tutors";
+        $tutors = TutorService::getAllTutors();
     }
-    $tutors = $db->query($tutors_query)->fetchAll(PDO::FETCH_ASSOC);
 } catch (Exception $e) {
     // Suppress or assign empty
 }
@@ -145,7 +148,7 @@ try {
 // Fetch students
 $students = [];
 try {
-    $students = $db->setQuery("SELECT * FROM students")->getAll();
+    $students = StudentService::getAllStudents();
 } catch (Exception $e) {
     // Suppress
 }
@@ -153,7 +156,7 @@ try {
 // Fetch active assignments - N+1 Loop for displaying details
 $assignments_list = [];
 try {
-    $assignments_list = $db->setQuery("SELECT * FROM assignments")->getAll();
+    $assignments_list = AssigmentService::getAllAssignments();
 } catch (Exception $e) {
     // Suppress
 }

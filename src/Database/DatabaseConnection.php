@@ -10,6 +10,7 @@ class DatabaseConnection
     private static ?DatabaseConnection $instance = null;
 
     public string $query = '';
+    public array $params = [];
 
     private function __construct()
     {
@@ -41,21 +42,24 @@ class DatabaseConnection
     }
 
     public function query(string $query)
-    {   
+    {
         return $this->db->query($query);
     }
 
-    public function exec(string $query)
+    public function exec(string $query, $params = [])
     {
-        return $this->db->exec($query);
+        $this->setQuery($query, $params);
+        $statement = $this->db->prepare($this->query, $this->params);
+        return $statement->execute();
     }
 
     /**
      * set query tobe executed
      */
-    public function setQuery(string $query)
+    public function setQuery(string $query, array $params = [])
     {
         $this->query = $query;
+        $this->params = $params;
         return $this;
     }
 
@@ -64,7 +68,19 @@ class DatabaseConnection
      */
     public function get()
     {
-        return $this->db->query($this->query)->fetch(PDO::FETCH_ASSOC);
+        try {
+            $statement = $this->db->prepare($this->query);
+
+            $statement->execute($this->params);
+            $result = $statement->fetch();
+            $this->query = '';
+            $this->params = [];
+
+            return $result;
+        } finally {
+            $this->query = '';
+            $this->params = [];
+        }
     }
 
     /**
@@ -72,6 +88,18 @@ class DatabaseConnection
      */
     public function getAll()
     {
-        return $this->db->query($this->query)->fetchAll(PDO::FETCH_ASSOC);
+        try {
+            $statement = $this->db->prepare($this->query);
+
+            $statement->execute($this->params);
+            $result = $statement->fetchAll();
+            $this->query = '';
+            $this->params = [];
+
+            return $result;
+        } finally {
+            $this->query = '';
+            $this->params = [];
+        }
     }
 }
